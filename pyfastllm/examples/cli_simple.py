@@ -13,20 +13,29 @@ def args_parser():
     parser.add_argument('-p', '--path', type=str, required=True, default='', help='模型文件的路径')
     parser.add_argument('-t', '--threads', type=int, default=4,  help='使用的线程数量')
     parser.add_argument('-l', '--low', action='store_true', help='使用低内存模式')
+    parser.add_argument('--top_p', type=float, default=1.0,  help='采样参数top_p')
+    parser.add_argument('--top_k', type=int, default=1,  help='采样参数top_k，大于1生成具有随机性')
+    parser.add_argument('--temperature', type=float, default=1.0,  help='采样参数温度，越高结果越不固定')
+    parser.add_argument('--repeat_penalty', type=float, default=1.0,  help='采样参数重复惩罚因子')
     args = parser.parse_args()
     return args
 
 
-def response(model, prompt_input:str, stream_output:bool=False):
+def response(model, prompt_input:str, args, stream_output:bool=False):
 
     input_ids = model.weight.tokenizer.encode(prompt_input)
     input_ids = input_ids.to_list()
     input_ids = [int(v) for v in input_ids]
-    if model.model_type == "chatglm":
-        input_ids = [model.gmask_token_id, model.bos_token_id] + input_ids
+    # if model.model_type == "chatglm":
+    #     input_ids = [model.gmask_token_id, model.bos_token_id] + input_ids
     # print(input_ids)
+    config = fastllm.GenerationConfig()
+    config.top_p = args.top_p
+    config.top_k = args.top_k
+    config.temperature = args.temperature
+    config.repeat_penalty = args.repeat_penalty
 
-    handle = model.launch_response(input_ids, fastllm.GenerationConfig())
+    handle = model.launch_response(input_ids, config)
     continue_token = True
 
     ret_byte = b""
@@ -74,7 +83,7 @@ def run_with_response(args):
             continue
         prompt = model.make_input(history, dialog_round, input_text)
 
-        outputs = response(model, prompt_input=prompt, stream_output=True)
+        outputs = response(model, prompt, args, stream_output=True)
 
         print(f"{model.model_type}:", end=' ')
         past_len = 0
