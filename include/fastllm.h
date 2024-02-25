@@ -402,6 +402,8 @@ namespace fastllm {
         std::string Decode(const Data &data); // 解码
 
         std::string DecodeTokens(const std::vector <int> &tokens); // 解码
+    private:
+        std::vector<float> BytePairEncode(const std::string &s);
     };
 
     std::string GetModelTypeFromFile(const std::string &fileName);
