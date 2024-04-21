@@ -325,11 +325,12 @@ namespace fastllm {
             // 1.2 Attention
             // 1.2.0 q * k^T
             MatMulTransB(q, pastKey, attenWeights, 1.0 / sqrt(head_dim));
-            attenWeights.Reshape({1, attenWeights.dims[0], attenWeights.dims[1], attenWeights.dims[2]});
+            attenWeights.Reshape({bsz, -1, attenWeights.dims[1], attenWeights.dims[2]});
             if (attentionMask.dims.size() != 0) {
                 AttentionMask(attenWeights, attentionMask, -10000);
             }
             Softmax(attenWeights, attenWeights, -1);
+            attenWeights.Reshape({1, -1, attenWeights.dims[2], attenWeights.dims[3]});
             MatMul(attenWeights, pastValue, attenOutput);
 
             attenOutput.Reshape({attenOutput.dims[1], attenOutput.dims[2], attenOutput.dims[3]});
