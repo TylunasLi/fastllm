@@ -604,8 +604,8 @@ PYBIND11_MODULE(pyfastllm, m) {
     .def("response", &fastllm::ChatGLMModel::Response)
     .def("batch_response", [](fastllm::ChatGLMModel &model, 
                               const std::vector <std::string> &inputs,
-                               RuntimeResultBatch retCb,
-							   fastllm::GenerationConfig config)->std::vector<std::string> {
+                              RuntimeResultBatch retCb,
+                              fastllm::GenerationConfig config)->std::vector<std::string> {
       std::vector <std::string> outputs;
       model.ResponseBatch(inputs, outputs, retCb, config);
       return outputs;
@@ -621,7 +621,15 @@ PYBIND11_MODULE(pyfastllm, m) {
           int retV = model.Forward(inputIds, attentionMask, positionIds, pastKeyValues, generationConfig, tokens);
           return std::make_tuple(retV, pastKeyValues);
     })
-    .def("launch_response", &fastllm::ChatGLMModel::LaunchResponseTokens)
+    .def("launch_response", 
+        [](fastllm::ChatGLMModel &model, 
+           const std::vector<int> &inputTokens,
+           const fastllm::GenerationConfig &generationConfig)->int {
+          py::gil_scoped_release release;
+          int handleId = model.LaunchResponseTokens(inputTokens, generationConfig);
+          py::gil_scoped_acquire acquire;
+          return handleId;
+    })
     .def("fetch_response", &fastllm::ChatGLMModel::FetchResponseTokens)
     .def("save_lowbit_model", &fastllm::ChatGLMModel::SaveLowBitModel)
     .def("make_input", &fastllm::ChatGLMModel::MakeInput);
@@ -639,8 +647,8 @@ PYBIND11_MODULE(pyfastllm, m) {
     .def("response", &fastllm::MOSSModel::Response)
     .def("batch_response", [](fastllm::MOSSModel &model, 
                               const std::vector <std::string> &inputs,
-                               RuntimeResultBatch retCb,
-							   fastllm::GenerationConfig config)->std::vector<std::string> {
+                              RuntimeResultBatch retCb,
+                              fastllm::GenerationConfig config)->std::vector<std::string> {
       std::vector <std::string> outputs;
       model.ResponseBatch(inputs, outputs, retCb, config);
       return outputs;
@@ -654,7 +662,15 @@ PYBIND11_MODULE(pyfastllm, m) {
           int retV = model.Forward(inputIds, attentionMask, positionIds, pastKeyValues, generationConfig, tokens);
           return std::make_tuple(retV, pastKeyValues);
     })
-    .def("launch_response", &fastllm::MOSSModel::LaunchResponseTokens)
+    .def("launch_response", 
+        [](fastllm::MOSSModel &model, 
+           const std::vector<int> &inputTokens,
+           const fastllm::GenerationConfig &generationConfig)->int {
+          py::gil_scoped_release release;
+          int handleId = model.LaunchResponseTokens(inputTokens, generationConfig);
+          py::gil_scoped_acquire acquire;
+          return handleId;
+    })
     .def("fetch_response", &fastllm::MOSSModel::FetchResponseTokens)
     .def("save_lowbit_model", &fastllm::MOSSModel::SaveLowBitModel)
     .def("make_input", &fastllm::MOSSModel::MakeInput);
@@ -672,8 +688,8 @@ PYBIND11_MODULE(pyfastllm, m) {
     .def("response", &fastllm::LlamaModel::Response)
     .def("batch_response", [](fastllm::LlamaModel &model, 
                               const std::vector <std::string> &inputs,
-                               RuntimeResultBatch retCb,
-							   fastllm::GenerationConfig config)->std::vector<std::string> {
+                              RuntimeResultBatch retCb,
+                              fastllm::GenerationConfig config)->std::vector<std::string> {
       std::vector <std::string> outputs;
       model.ResponseBatch(inputs, outputs, retCb, config);
       return outputs;
@@ -688,7 +704,15 @@ PYBIND11_MODULE(pyfastllm, m) {
           int retV = model.Forward(inputIds, attentionMask, positionIds, pastKeyValues, generationConfig, tokens);
           return std::make_tuple(retV, pastKeyValues);
     })
-    .def("launch_response", &fastllm::LlamaModel::LaunchResponseTokens)
+    .def("launch_response", 
+        [](fastllm::LlamaModel &model, 
+           const std::vector<int> &inputTokens,
+           const fastllm::GenerationConfig &generationConfig)->int {
+          py::gil_scoped_release release;
+          int handleId = model.LaunchResponseTokens(inputTokens, generationConfig);
+          py::gil_scoped_acquire acquire;
+          return handleId;
+    })
     .def("fetch_response", &fastllm::LlamaModel::FetchResponseTokens)
     .def("save_lowbit_model", &fastllm::LlamaModel::SaveLowBitModel)
     .def("make_input", &fastllm::LlamaModel::MakeInput);
@@ -723,7 +747,15 @@ PYBIND11_MODULE(pyfastllm, m) {
             int retV = model.Forward(inputIds, attentionMask, positionIds, pastKeyValues, generationConfig, tokens);
             return std::make_tuple(retV, pastKeyValues);
     })
-    .def("launch_response", &fastllm::QWenModel::LaunchResponseTokens)
+    .def("launch_response", 
+        [](fastllm::QWenModel &model, 
+           const std::vector<int> &inputTokens,
+           const fastllm::GenerationConfig &generationConfig)->int {
+          py::gil_scoped_release release;
+          int handleId = model.LaunchResponseTokens(inputTokens, generationConfig);
+          py::gil_scoped_acquire acquire;
+          return handleId;
+    })
     .def("fetch_response", &fastllm::QWenModel::FetchResponseTokens)
     .def("save_lowbit_model", &fastllm::QWenModel::SaveLowBitModel)
     .def("make_input", &fastllm::QWenModel::MakeInput);

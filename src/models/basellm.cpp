@@ -688,7 +688,7 @@ printf("tot = %d\n", tot);
                         }
 
                         model->dictLocker.unlock();
-                        MySleep(0);
+                        MySleep(2);
                     }
                 }, this);
             }

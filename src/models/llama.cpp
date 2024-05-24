@@ -1147,7 +1147,7 @@ namespace fastllm {
                         }
 
                         model->dictLocker.unlock();
-                        MySleep(0);
+                        MySleep(2);
                     }
                 }, this);
             }
