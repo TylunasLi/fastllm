@@ -17,6 +17,11 @@
 #include "devices/tfacc/tfaccdevice.h"
 #endif
 
+#ifdef USE_ASCEND_NPU
+#include "devices/ascend/ascenddevice.h"
+#include "devices/ascend/fastllm-acl.h"
+#endif
+
 namespace fastllm {
     Executor::Executor() {
         this->devices.clear();
@@ -25,6 +30,9 @@ namespace fastllm {
 #endif
 #ifdef USE_TFACC
         this->devices.push_back((BaseDevice*) new TfaccDevice());
+#endif
+#ifdef USE_ASCEND_NPU
+        this->devices.push_back((BaseDevice*) new AscendNpuDevice());
 #endif
         this->devices.push_back((BaseDevice*) new CpuDevice());
     }
@@ -95,6 +103,11 @@ namespace fastllm {
 #ifdef USE_CUDA
                 if (device->deviceType == "cuda" && device->deviceIds.size() > 0) {
                     FastllmCudaSetDevice(device->deviceIds[0]);
+                }
+#endif
+#ifdef USE_ASCEND_NPU
+                if (device->deviceType == "npu" && device->deviceIds.size() > 0) {
+                    npu::FastllmAclSetDevice(device->deviceIds[0]);
                 }
 #endif
                 for (auto &it: datas) {

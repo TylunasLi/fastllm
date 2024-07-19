@@ -19,6 +19,7 @@ namespace fastllm {
         void FastllmAclDirectFree(void *ret);
         void FastllmAclMallocBigBuffer(size_t size);
         void FastllmAclClearBigBuffer();
+        void FastllmAclClearBuffer();
 
         int FastllmAclCopyFromHostToDevice(void *dst, void *src, size_t size);
         int FastllmAclCopyFromDeviceToHost(void *dst, void *src, size_t size);

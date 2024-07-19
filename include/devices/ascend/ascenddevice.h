@@ -14,6 +14,7 @@ namespace fastllm {
     class AscendNpuDevice : BaseDevice {
     public:
         AscendNpuDevice();
+        virtual ~AscendNpuDevice();
 
         bool Malloc(void **ret, size_t size);
         bool Free(void *ret);

@@ -7,6 +7,11 @@
 namespace fastllm {
     AscendNpuDevice::AscendNpuDevice() {
         this->deviceType = "npu";
+        npu::FastllmAclInit();
+    }
+
+    AscendNpuDevice::~AscendNpuDevice() {
+        npu::FastllmAclFinalize();
     }
 
     bool AscendNpuDevice::Malloc(void **ret, size_t size) {
@@ -39,7 +44,7 @@ namespace fastllm {
         };
 
     void BaseAscendOperator::ToAclTensor(const std::pair<std::string, Data*> &data, std::vector<aclTensorDesc *> &tensors, 
-            std::vector<aclDataBuffer *> buffers) {
+                                         std::vector<aclDataBuffer *> buffers) {
     	std::vector<int64_t> expandDims64(data.second->dims.size(), 0);
     	for (int i = 0; i < data.second->dims.size(); i++)
     		expandDims64[i] = (int64_t) data.second->expansionDims[i];
