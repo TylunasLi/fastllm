@@ -184,7 +184,7 @@ namespace fastllm {
     };
 
     enum DataDevice {
-        CPU = 0, CUDA = 1
+        CPU = 0, CUDA = 1, NPU = 2
     };
 
     enum WeightType {

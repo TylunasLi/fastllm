@@ -5,15 +5,17 @@ project(fastllm LANGUAGES CXX)
 option(USE_CUDA "use CUDA" OFF)
 option(CUDA_NO_TENSOR_CORE "Optimize for legacy CUDA GPUs which has Tensor Core." OFF)
 
+option(USE_IVCOREX "use iluvatar corex gpu" OFF)
+
 option(USE_TFACC "use tfacc" OFF)
+
+option(USE_ASCEND_NPU "use Huawei Ascend NPU" OFF)
 
 option(PY_API "python api" OFF)
 
 option(USE_MMAP "use mmap" OFF)
 
 option(USE_SENTENCEPIECE "use sentencepiece" OFF)
-
-option(USE_IVCOREX "use iluvatar corex gpu" OFF)
 
 option(BUILD_CLI "build cli" OFF)
 
@@ -25,9 +27,11 @@ message(STATUS "USE_CUDA: ${USE_CUDA}")
 
 message(STATUS "CUDA_ARCH: ${CUDA_ARCH}")
 
+message(STATUS "For legacy CUDA GPUs: ${CUDA_NO_TENSOR_CORE}")
+
 message(STATUS "USE_TFACC: ${USE_TFACC}")
 
-message(STATUS "For legacy CUDA GPUs: ${CUDA_NO_TENSOR_CORE}")
+message(STATUS "Use Ascend NPU: ${USE_ASCEND_NPU}")
 
 message(STATUS "PYTHON_API: ${PY_API}")
 
@@ -103,6 +107,25 @@ if (USE_TFACC)
     include_directories(include/devices/tfacc)
 endif()
 
+if (USE_ASCEND_NPU)
+    add_compile_definitions(USE_ASCEND_NPU)
+    set(FASTLLM_ASCENDCL_SOURCES src/devices/ascend/ascenddevice.cpp src/devices/ascend/fastllm-acl.cpp)
+    include_directories(include/devices/ascend)
+    if (NOT DEFINED ENV{ASCEND_TOOLKIT_HOME})
+        set(ASCEND_NPU_INC_PATH "/usr/local/Ascend/ascend-toolkit/latest")
+        message(STATUS "use default Ascend Toolkit include path.")
+        set(ASCEND_NPU_LIB_PATH "/usr/local/Ascend/ascend-toolkit/latest/")
+        message(STATUS "use ASCEND_NPU_LIB_PATH: ${ASCEND_NPU_LIB_PATH}")
+    else ()
+        set(ASCEND_NPU_INC_PATH $ENV{ASCEND_TOOLKIT_HOME})
+        set(ASCEND_NPU_LIB_PATH $ENV{ASCEND_TOOLKIT_HOME})
+        message(STATUS "env ASCEND_NPU_LIB_PATH: ${ASCEND_NPU_LIB_PATH}")
+    endif()
+    include_directories(${ASCEND_NPU_INC_PATH}/runtime/include/)
+    link_directories(${ASCEND_NPU_LIB_PATH}/runtime/lib64/stub/)
+    set(FASTLLM_LINKED_LIBS ${FASTLLM_LINKED_LIBS} ascendcl acl_cblas)
+endif()
+
 if (PY_API)
     if(POLICY CMP0148)
         cmake_policy(SET CMP0148 NEW)
@@ -116,7 +139,7 @@ if (PY_API)
 
     include_directories(third_party/pybind11/include)
     file(GLOB FASTLLM_CXX_HEADERS include/**/*.h)
-    add_library(pyfastllm MODULE src/pybinding.cpp ${FASTLLM_CXX_SOURCES} ${FASTLLM_CXX_HEADERS} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES})
+    add_library(pyfastllm MODULE src/pybinding.cpp ${FASTLLM_CXX_SOURCES} ${FASTLLM_CXX_HEADERS} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_ASCENDCL_SOURCES})
     target_link_libraries(pyfastllm PUBLIC pybind11::module ${FASTLLM_LINKED_LIBS})
     pybind11_extension(pyfastllm)
 else()
@@ -124,6 +147,7 @@ add_library(fastllm OBJECT
             ${FASTLLM_CXX_SOURCES}
             ${FASTLLM_CUDA_SOURCES}
             ${FASTLLM_TFACC_SOURCES}
+            ${FASTLLM_ASCENDCL_SOURCES}
             )
 target_link_libraries(fastllm PUBLIC ${FASTLLM_LINKED_LIBS})
 
@@ -156,7 +180,7 @@ if (BUILD_CLI)
     target_link_libraries(FastllmStudio_cli fastllm)
 endif()
 
-add_library(fastllm_tools SHARED ${FASTLLM_CXX_SOURCES} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} tools/src/pytools.cpp)
+add_library(fastllm_tools SHARED ${FASTLLM_CXX_SOURCES} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_ASCENDCL_SOURCES} tools/src/pytools.cpp)
 target_link_libraries(fastllm_tools PUBLIC ${FASTLLM_LINKED_LIBS})
 
 if (${CMAKE_HOST_WIN32})
