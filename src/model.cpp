@@ -3,6 +3,9 @@
 
 #include "model.h"
 #include "fastllm.h"
+#ifdef USE_ASCEND_NPU
+#include "executor.h"
+#endif
 #include <sstream>
 #include <fstream>
 
@@ -210,7 +213,14 @@ namespace fastllm {
         std::string modelType = GetModelTypeFromFile(fileName);
         basellm *model = CreateModelWithType(modelType);
         model->LoadFromFile(fileName);
+#ifdef USE_ASCEND_NPU
+        Executor *executor = (Executor *) GetExecutor();
+        executor->setWarmUpMode(true);
+#endif
         model->WarmUp();
+#ifdef USE_ASCEND_NPU
+        executor->setWarmUpMode(false);
+#endif
         return std::unique_ptr<fastllm::basellm> (model);
     }
 
@@ -699,7 +709,14 @@ namespace fastllm {
         printf("\n");
         fflush(stdout);
 
+#ifdef USE_ASCEND_NPU
+        Executor *executor = (Executor *) GetExecutor();
+        executor->setWarmUpMode(true);
+#endif
         model->WarmUp();
+#ifdef USE_ASCEND_NPU
+        executor->setWarmUpMode(false);
+#endif
         return std::unique_ptr<fastllm::basellm> (model);
     }
 }
