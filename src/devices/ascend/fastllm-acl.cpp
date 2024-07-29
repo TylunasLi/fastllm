@@ -12,6 +12,7 @@
         printf(message, ##args); \
         printf("AsecndCL error = %d at %s:%d\n", state, "fastllm-acl.cpp", __LINE__);\
         if (state >= 500000) \
+            aclFinalize();\
             exit(state);\
     }
 		
@@ -21,8 +22,10 @@ void showError(aclError state, char const* const message, const char* const file
            int const line) {
     if (ACL_SUCCESS != state) {
         printf("%s  AsecndCL error = %d at %s:%d\n", message, state, file, line);
-        if (state >= 500000)
+        if (state >= 500000) {
+            aclFinalize();
             exit(state);
+        }
     }  
 }
 

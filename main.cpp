@@ -149,6 +149,6 @@ int main(int argc, char **argv) {
         }, generationConfig);
         messages.push_back(std::make_pair("assistant", ret));
     }
-
+    fastllm::Finalize();
     return 0;
 }
