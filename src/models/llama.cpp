@@ -137,6 +137,9 @@ namespace fastllm {
                             const fastllm::Data &positionIds, std::vector<std::pair<Data, Data>> &pastKeyValues,
                             const GenerationConfig &generationConfig, const LastTokensManager &lastTokens,
                             std::vector <std::vector <float>*> *retLogits) {
+#ifdef USE_ASCEND_NPU
+        this->mergeSwiglu = true;
+#endif
         if (!mergeQKV) {
             bool canMerge = true;
             for (int i = 0; i < block_cnt; i++) {
@@ -246,6 +249,9 @@ namespace fastllm {
 
             this->mergeSwiglu = canMerge;            
         }
+#ifdef USE_ASCEND_NPU
+        this->mergeSwiglu = false;
+#endif
         
         Data alibiData;
         if (this->weight.dicts["use_alibi"] == "1") {
