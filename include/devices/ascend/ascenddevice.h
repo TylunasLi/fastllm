@@ -11,6 +11,7 @@
 namespace fastllm {
 
     typedef std::map<std::string, std::pair<std::vector<int>, std::vector<std::vector<int64_t>>>> DynamicShapeDict;
+    typedef std::vector<std::pair<std::string, Data*>> OrderedData;
     typedef std::map <std::string, bool> BoolDict;
 
     class AscendNpuDevice : BaseDevice {
@@ -35,11 +36,11 @@ namespace fastllm {
         // 是否可以运行某一个算子
         virtual bool CanRun(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
         // 不编译，直接运行一个算子
-        bool RunSingleOp(const std::string &opType, const DataDict &inputData,
+        bool RunSingleOp(const std::string &opType, const OrderedData &inputData,
                          const DataDict &outputData, const FloatDict &floatParams, 
                          const IntDict &intParams, const BoolDict &boolParams);
         // 动态shape编译，并运行一个算子
-        bool CompileAndRunSingleOp(const std::string &opType, const DataDict &inputData, const fastllm::DataDict &outputData,
+        bool CompileAndRunSingleOp(const std::string &opType, const OrderedData &inputData, const fastllm::DataDict &outputData,
                                    const DynamicShapeDict &dynamicShapes, const FloatDict &floatParams, 
                                    const IntDict &intParams, const BoolDict &boolParams);
     protected:
@@ -66,6 +67,12 @@ namespace fastllm {
     public:
         AscendMulToOp();
         bool CanRun(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
+        void Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
+    };
+
+    class AscendAddToOp : public BaseAscendOperator {
+    public:
+        AscendAddToOp();
         void Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
     };
 

@@ -10,7 +10,7 @@
 | ------------------------- | -------------------------------------------- | -------- | ----------- | -------------- |
 | Atlas 200/500 推理产品    | Atlas 200加速模块   Atlas 500智能小站        | _昇腾?_  | 8G          | 51.2GB/s       |
 | Atlas 200/500 A2 推理产品 | Atlas 200I A2加速模块   Atlas 500 A2智能小站 | _昇腾?_  | 12G         | 51.2GB/s       |
-| Atlas 300 推理产品        | Atlas 300I                                   | 昇腾310  | 32G（8*4G） | 204.8GB/s      |
+| Atlas 300 推理产品        | Atlas 300I                                   | 昇腾310  | 32G（4*8G） | 204.8GB/s      |
 | Atlas 训练系列产品        | Atlas 800T 训练服务器/ Atlas 300T            | 昇腾910A | 32G         | HBM, > 640GB/s |
 | Atlas A2训练系列产品      | Atlas 800T A2 训练服务器                     | 昇腾910B | 32G / 64G   | HBM, > 640GB/s |
 | Atlas 推理系列产品        | Atlas 300I Pro                               | 昇腾310P | 24G         | 204.8 GB/s     |
@@ -34,6 +34,7 @@
 ### 安装驱动和CANN
 
 * 安装NPU驱动：
+
   参考官方文档：[310P](https://www.hiascend.com/document/detail/zh/quick-installation/24.0.RC1/quickinstg/800I_A2/quickinstg_800I_A2_0007.html) [910A](https://www.hiascend.com/document/detail/zh/quick-installation/23.0.RC2/quickinstg/800_9000/quickinstg_800_9000_0007.html) [910B](https://www.hiascend.com/document/detail/zh/quick-installation/24.0.RC1/quickinstg_train/800_9000A2/quickinstg_800_9000A2_0007.html)
 
 * 安装CANN：
@@ -48,6 +49,12 @@
 chmod a+x Ascend-cann-kernels-910*_*_linux.run
 Ascend-cann-kernels-910*_*_linux.run --install --quiet
 ```
+
+* 配置环境
+
+  算子编译需要依赖python。执行`pip3 check`，根据提示安装需要的包；（其中tensorflow不需要安装）  
+
+  如果使用虚拟环境，如vituralenv / conda，启动前需要把虚拟环境的库目录加到`PYTHONPATH`环境变量中。
 
 ### 使用Docker镜像
 
