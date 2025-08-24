@@ -19,6 +19,7 @@
 #include "deepseekv2.h"
 #include "qwen.h"
 #include "glm.h"
+#include "glm4.h"
 #include "minicpm.h"
 #include "minicpm3.h"
 #include "internlm2.h"
@@ -251,6 +252,8 @@ namespace fastllm {
             model->weight.tokenizer.type = Tokenizer::TokenizerType::QWEN;
         } else if (modelType == "glm") {
             model = (basellm*)(new GLMModel());
+        } else if (modelType == "glm4") {
+            model = (basellm*)(new GLM4Model());
         } else if (modelType == "bert") {
             model = (basellm*)(new BertModel());
         } else if (modelType == "xlm-roberta") {
@@ -702,7 +705,7 @@ namespace fastllm {
             || tokenizerClass == "Qwen2Tokenizer"
             || tokenizerClass == "BloomTokenizer"
             || tokenizerClass == "LlamaTokenizer" || tokenizerClass == "CodeLlamaTokenizer"
-            || tokenizerClass == "MiniCPMTokenizer") {
+            || tokenizerClass == "MiniCPMTokenizer" || tokenizerClass == "PreTrainedTokenizer") {
             // PreTrainedTokenizerFast
             std::string tokenizerFile = path + "tokenizer.json";
             if (!fastllm::FileExists(tokenizerFile)) {
@@ -1430,6 +1433,8 @@ if (false) {
                 std::string arch = config["architectures"].array_items()[0].string_value();
                 if (arch == "InternLM2ForCausalLM") {
                     modelType = "internlm2";
+                } else if (arch == "GlmForCausalLM") { // glm-edge-4b-chat
+                    modelType = "glm4";
                 }
             }
 
