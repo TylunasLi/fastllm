@@ -386,7 +386,7 @@ namespace fastllm {
                 return JinjaVar((long long) element.dictValue.size());
             return element;
         };
-        functionArgCount["length"] = 2;
+        functionArgCount["length"] = 1;
         functionMap["startswith"] = [](const JinjaVar &a) {
             std::string string = a.arrayValue[0].stringValue;
             std::string prefix = a.arrayValue[1].stringValue;
@@ -430,6 +430,18 @@ namespace fastllm {
             return JinjaVar(string);
         };
         functionArgCount["strip"] = 2;
+        functionMap["get"] = [](const JinjaVar &a) {
+            JinjaVar object = a.arrayValue[0];
+            std::string key = a.arrayValue[1].stringValue;
+            if (object.type == JinjaVar::JinjaDict) {
+                if (object.dictValue.find(key) != object.dictValue.end())
+                    return object.dictValue[key];
+            }
+            if (a.arrayValue.size() > 2)
+                return a.arrayValue[2];
+            return JinjaVar();
+        };
+        functionArgCount["get"] = 3;
     }
 
     JinjaTemplate::JinjaTemplate (const std::string &temp) {
@@ -507,12 +519,14 @@ namespace fastllm {
             } else if (tokens[i].type == JinjaToken::JinjaTokenNamespace) {
                 // 目前仅支持 "变量 = 表达式" 格式
                 int index = tokens[i + 1].type == JinjaToken::JinjaTokenLSB ? 1 : 0;
-                AssertInFastLLM(
-                    tokens.size() - i >= 3 &&
-                    tokens[i + index + 1].type == JinjaToken::JinjaTokenID &&
-                    tokens[i + index + 2].type == JinjaToken::JinjaTokenAssign,
-                    "Jinja error: only support format \"(var = expression)\"."
-                );
+                if (ops.empty() || ops[0].type != JinjaToken::JinjaTokenFUNC) {
+                    AssertInFastLLM(
+                        tokens.size() - i >= 3 &&
+                        tokens[i + index + 1].type == JinjaToken::JinjaTokenID &&
+                        tokens[i + index + 2].type == JinjaToken::JinjaTokenAssign,
+                        "Jinja error: only support format \"(var = expression)\"."
+                    );
+                }
                 ops.push_back(tokens[i]);
             } else if (tokens[i].type == JinjaToken::JinjaTokenRMB) {
                 while (ops.size() > 0 && ops.back().type != JinjaToken::JinjaTokenLMB) {
@@ -623,9 +637,9 @@ namespace fastllm {
             } else if (it.type == JinjaToken::JinjaTokenFUNC) {
                 if (functionMap.find(it.value) != functionMap.end()) {
                     int argCount = functionArgCount[it.value];
-                    AssertInFastLLM(vars.size() >= argCount, "Jinja Error: function expression error.");
+                    // AssertInFastLLM(vars.size() >= argCount, "Jinja Error: function expression error.");
                     JinjaVar args;
-                    for (int k=0; k<argCount; k++) {
+                    for (int k=0; k<argCount && !vars.empty(); k++) {
                         JinjaVar a = vars.back();
                         if (a.type == JinjaVar::JinjaNone) {
                             a = local[a];
@@ -776,17 +790,30 @@ namespace fastllm {
                     curBlock.tokens[2].type == JinjaToken::JinjaTokenIn,
                     "Jinja error: only support format \"for var in expression\"."
                 );
+                int ifPos = curBlock.tokens.size();
+                for (int k = 3; k < curBlock.tokens.size(); k++)
+                    if (curBlock.tokens[k].type == JinjaToken::JinjaTokenIf)
+                        ifPos = k;
 
                 std::string iterId = curBlock.tokens[1].value;
-                JinjaVar exp = ComputeExpression(var, curBlock.tokens, 3, curBlock.tokens.size());
+                JinjaVar exp = ComputeExpression(var, curBlock.tokens, 3, ifPos);
                 JinjaVar original = var[iterId];
                 var["loop"] = {{"index", 1}, {"index0", 0}, {"first", 1}, {"last", 0}};
                 if (exp.type == JinjaVar::JinjaArray) {
                     for (auto &it : exp.arrayValue) {
                         var[iterId] = it;
-                        Parse(i + 1, endPos, var, ret);
-                        var["loop"]["index"].intValue++;
-                        var["loop"]["index0"].intValue++;
+                        if (ifPos < curBlock.tokens.size()) {
+                            JinjaVar exp = ComputeExpression(var, curBlock.tokens, ifPos, curBlock.tokens.size());
+                            if (exp.BoolValue()) {
+                                Parse(i + 1, endPos, var, ret);
+                                var["loop"]["index"].intValue++;
+                                var["loop"]["index0"].intValue++;
+                            }
+                        } else {
+                            Parse(i + 1, endPos, var, ret);
+                            var["loop"]["index"].intValue++;
+                            var["loop"]["index0"].intValue++;
+                        }
                         var["loop"]["first"].intValue = 0;
                         var["loop"]["last"].intValue = (var["loop"]["index"].intValue == exp.arrayValue.size());
                     }
