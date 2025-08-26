@@ -71,8 +71,11 @@ namespace fastllm {
         if (this->weight.dicts.find("num_key_value_heads") != this->weight.dicts.end()) {
             num_key_value_heads = atoi(this->weight.dicts["num_key_value_heads"].c_str());
         }
-        head_dim = embed_dim / num_attention_heads;
-        rotary_dim = head_dim;
+        if (this->weight.dicts.find("head_dim") != this->weight.dicts.end()) {
+            max_positions = atoi(this->weight.dicts["head_dim"].c_str());
+        } else {
+            head_dim = embed_dim / num_attention_heads;
+        }
         if (this->weight.dicts.find("max_position_embeddings") != this->weight.dicts.end()) {
             max_positions = atoi(this->weight.dicts["max_position_embeddings"].c_str());
         }
@@ -92,6 +95,10 @@ namespace fastllm {
         if (this->weight.dicts.find("rope_scaling.factor") != this->weight.dicts.end()) {
             rope_factor = atof(this->weight.dicts["rope_scaling.factor"].c_str());
         }
+        if (this->weight.dicts.find("partial_rotary_factor") != this->weight.dicts.end()) {
+            partial_rotary_factor = atof(this->weight.dicts["partial_rotary_factor"].c_str());
+        }
+        rotary_dim = head_dim * partial_rotary_factor;
         std::pair<std::vector<float>, std::vector<float>> &&pair = this->UpdateRotaryPosEmb(rope_base, rope_factor, std::max(max_positions, 16384));
         sinData.ToDevice(DataDevice::CPU);
         cosData.ToDevice(DataDevice::CPU);

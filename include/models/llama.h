@@ -71,6 +71,8 @@ namespace fastllm {
 
         float rope_factor = 1.f;
 
+        float partial_rotary_factor = 1.f;
+
         int num_key_value_heads = num_attention_heads;
 
         float rms_norm_eps = 1e-6;

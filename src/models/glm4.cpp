@@ -19,6 +19,7 @@
 namespace fastllm {
     GLM4Model::GLM4Model()
         : LlamaModel() {
+        this->model_struct = "glm4";
         this->model_type = "glm4";
         rotary_dim = 128;
         weight.embeddingNames.insert("model.embed_tokens.weight");
@@ -71,8 +72,6 @@ namespace fastllm {
         Data attenWeights, attenOutput;
         Data attenLastOutput;
         Data w1, w2, w3;
-        Data* sinDataPtr = &sinData;
-        Data* cosDataPtr = &cosData;
 
         Embedding(inputIds, this->weight["model.embed_tokens.weight"], hiddenStates);
         ToDataType(hiddenStates, this->dataType);
@@ -128,8 +127,8 @@ namespace fastllm {
 
             PermuteSelf(q, {1, 0, 2, 3});
             PermuteSelf(k, {1, 0, 2, 3});
-            fastllm::NearlyRotatePosition2D(q, positionIds, *sinDataPtr, *cosDataPtr, rotary_dim / 2);
-            fastllm::NearlyRotatePosition2D(k, positionIds, *sinDataPtr, *cosDataPtr, rotary_dim / 2);
+            fastllm::NearlyRotatePosition2D(q, positionIds, sinData, cosData, rotary_dim);
+            fastllm::NearlyRotatePosition2D(k, positionIds, sinData, cosData, rotary_dim);
 
             PermuteSelf(q, {1, 2, 0, 3});
             PermuteSelf(k, {1, 2, 0, 3});
@@ -242,10 +241,6 @@ namespace fastllm {
                 }
             }
         }
-        if (sinDataPtr != &sinData)
-            delete sinDataPtr;
-        if (cosDataPtr != &cosData)
-            delete cosDataPtr;
 
         return lastRet;
     }
@@ -266,8 +261,6 @@ namespace fastllm {
         Data attenWeights, curAttenOutput;
         Data attenLastOutput;
         Data w1, w2, w3;
-        Data* sinDataPtr = &sinData;
-        Data* cosDataPtr = &cosData;
         std::vector <Data> curContextLayer;
         curContextLayer.resize(batch);
         std::vector <Data> curKs, curVs, curQs;
@@ -359,14 +352,6 @@ namespace fastllm {
                 targetSeqLength = std::max(targetSeqLength, (pastKey.dims.size() > 2) ? pastKey.dims[1] + seqLens[b] : seqLens[b]);
             }
 
-            if (targetSeqLength >= max_positions && RoPEType::DYMAMIC_NTK == rope_type) {
-                float scale = pow((rope_factor * targetSeqLength / max_positions) - (rope_factor - 1), rotary_dim / (rotary_dim - 2));
-                float newbase = rope_base * scale;
-                std::pair<std::vector<float>, std::vector<float>> &&pair = this->UpdateRotaryPosEmb(newbase, rope_factor, targetSeqLength);
-                sinDataPtr = new Data(DataType::FLOAT32, {(int)this->sin.size(), (int)this->sin[0].size()}, pair.first);
-                cosDataPtr = new Data(DataType::FLOAT32, {(int)this->cos.size(), (int)this->cos[0].size()}, pair.second);
-            }
-
             for (int b = 0; b < batch; b++) {
                 Data &pastKey = *pastKeyValues[b * block_cnt + i].first, &pastValue = *pastKeyValues[b * block_cnt + i].second;
                 int curLen = seqLens[b];
@@ -403,8 +388,8 @@ namespace fastllm {
 
             PermuteSelf(q, {1, 0, 2, 3});
             PermuteSelf(k, {1, 0, 2, 3});
-            fastllm::NearlyRotatePosition2D(q, allPositionIds, *sinDataPtr, *cosDataPtr, rotary_dim / 2);
-            fastllm::NearlyRotatePosition2D(k, allPositionIds, *sinDataPtr, *cosDataPtr, rotary_dim / 2);
+            fastllm::NearlyRotatePosition2D(q, allPositionIds, sinData, cosData, rotary_dim);
+            fastllm::NearlyRotatePosition2D(k, allPositionIds, sinData, cosData, rotary_dim);
             PermuteSelf(q, {1, 0, 2, 3});
             PermuteSelf(k, {1, 0, 2, 3});
             Data attenOutput = Data(this->dataType);
@@ -617,10 +602,6 @@ namespace fastllm {
                 }
             }
         }
-        if (sinDataPtr != &sinData)
-            delete sinDataPtr;
-        if (cosDataPtr != &cosData)
-            delete cosDataPtr;
         return lastRet;
     }
 }
